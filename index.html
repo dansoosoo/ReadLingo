@@ -3,28 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>双语小说学习系统</title>
-
+<title>ReadLingo</title>
 
 <style>
 body {
+  margin: 0;
   font-family: Arial;
+}
+
+/* ===== 页头 ===== */
+header {
+  background: #3b82f6;
+  color: white;
   padding: 15px;
-  line-height: 2;
-  font-size: 18px;
-}
-
-#content {
-  white-space: pre-wrap;
-}
-
-.en {
-  color: rgb(60, 0, 255);
-  cursor: pointer;
+  font-size: 20px;
   font-weight: bold;
 }
 
-/* popup */
+/* ===== 小说区域 ===== */
+#content {
+  background: #fff4d6;
+  padding: 20px;
+  min-height: 100vh;
+  line-height: 2;
+  font-size: 18px;
+  white-space: pre-wrap;
+}
+
+/* ===== 单词高亮 ===== */
+.en {
+  color: #2b1a8b;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* ===== popup ===== */
 .popup {
   position: fixed;
   top: 50%;
@@ -37,8 +50,29 @@ body {
   padding: 16px;
   box-shadow: 0 12px 30px rgba(0,0,0,0.25);
   display: none;
+  z-index: 9999;
+}
+.word-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
+.word-text {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.star {
+  cursor: pointer;
+  font-size: 18px;
+  color: gold;
+  user-select: none;
+}
+
+.star:hover {
+  transform: scale(1.2);
+}
 .word {
   font-size: 22px;
   font-weight: bold;
@@ -62,34 +96,8 @@ body {
   cursor: pointer;
 }
 
-.cn {
-  margin-top: 6px;
-}
-
-.auto-box {
-  margin-top: 10px;
-  text-align: right;
-}
-
-.toggle {
-  padding: 4px 10px;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.on {
-  background: #4caf50;
-  color: white;
-}
-
-.off {
-  background: #ccc;
-}
-
-/* Youdao */
-
-.Youdao-box {
+/* ===== Youdao ===== */
+#YoudaoBox {
   position: fixed;
   top: 80px;
   right: 10px;
@@ -101,33 +109,76 @@ body {
   z-index: 9999;
   cursor: move;
 }
-.Youdao-box iframe {
+
+#YoudaoBox iframe {
   width: 100%;
   height: 100%;
   border: none;
 }
 
-.Youdao-box button {
-  position: absolute;
-  top: 5px;
-  right: 8px;
+.youdao-btn {
+  background: #1e3a8a;   /* 深蓝色 */
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;   /* 圆角 */
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
+.youdao-btn:hover {
+  background: #1d4ed8;
+}
+
+/* ===== 单词本 ===== */
+#wordBookBtn {
+  position: fixed;
+  top: 12px;
+  right: 15px;
+  background: white;
+  color: #3b82f6;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#wordBookPanel {
+  position: fixed;
+  top: 50px;
+  right: 15px;
+  width: 260px;
+  height: 400px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  display: none;
+  padding: 10px;
+  overflow-y: auto;
+  z-index: 999;
+}
 </style>
 </head>
 
 <body>
 
-<h2>📖 双语小说学习系统</h2>
+<header>ReadLingo</header>
+
+<button id="wordBookBtn" onclick="toggleWordBook()">单词本</button>
+
+<div id="wordBookPanel"></div>
 
 <div id="content"></div>
 
 <div id="popup" class="popup"></div>
 
-<div id="YoudaoBox" class="Youdao-box">
+<div id="YoudaoBox">
   <iframe id="YoudaoFrame"></iframe>
-  <button onclick="closeYoudao()">×</button>
-  <div id="YoudaoBox"></div>
 </div>
 
 <script>
@@ -136,9 +187,9 @@ const dict = {
  "福利院": { en: "orphanage", phonetic: "ˈɔːfənɪdʒ", cn: "福利院" },
 "弃儿": { en: "abandoned child", phonetic: "əˈbændənd tʃaɪld", cn: "被遗弃的孩子", level: "advanced" },
 "孤儿": { en: "orphan", phonetic: "ˈɔːfən", cn: "孤儿" },
-
+"凡夫俗子": { en: "ordinary person", phonetic: "ˈɔːdnri ˈpɜːsn", cn: "平凡的人" },
 "偶像": { en: "idol", phonetic: "ˈaɪdəl", cn: "偶像" },
-"明星": { en: "celebrity / star", phonetic: "səˈlebrəti / stɑːr", cn: "明星" },
+"明星": { en: "celebrity", phonetic: "səˈlebrəti", cn: "明星" },
 "娱乐圈": { en: "entertainment industry", phonetic: "ɪnˈtɛtəteɪnmənt ˈɪndəstri", cn: "娱乐圈", level: "advanced" },
 "代言人": { en: "spokesperson", phonetic: "ˈspəʊkspɜːsən", cn: "代言人", level: "advanced" },
 "影视歌三栖明星": { en: "multi-talented entertainer (film, TV, music)", phonetic: "ˈmʌlti ˈtæləntɪd ˌɛntəˈteɪnər", cn: "影视歌三栖明星", level: "advanced" },
@@ -149,8 +200,6 @@ const dict = {
 "羽绒大衣": { en: "down jacket", phonetic: "daʊn ˈdʒækɪt", cn: "羽绒服" },
 "皮夹": { en: "wallet", phonetic: "ˈwɒlɪt", cn: "钱包" },
 "真皮": { en: "genuine leather", phonetic: "ˈdʒenjuɪn ˈleðə", cn: "真皮" },
-
-"乞儿": { en: "beggar child", phonetic: "ˈbeɡə tʃaɪld", cn: "小乞丐", level: "advanced" },
 "乞丐": { en: "beggar", phonetic: "ˈbeɡə", cn: "乞丐" },
 
 "福利社工": { en: "social worker", phonetic: "ˈsəʊʃəl ˈwɜːkə", cn: "社会工作者", level: "advanced" },
@@ -159,7 +208,7 @@ const dict = {
 
 "皇后之命": { en: "destined to be queen", phonetic: "ˈdestɪnd tuː biː kwiːn", cn: "皇后的命格", level: "advanced" },
 
-"穿越": { en: "time travel / transmigration", phonetic: "taɪm ˈtrævl / ˌtrænzmɪˈɡreɪʃən", cn: "穿越", level: "advanced" },
+"穿越": { en: "time travel", phonetic: "taɪm ˈtrævl", cn: "穿越", level: "advanced" },
 
 "三国": { en: "Three Kingdoms period", phonetic: "θriː ˈkɪŋdəmz ˈpɪərɪəd", cn: "三国时期", level: "advanced" },
 
@@ -167,10 +216,7 @@ const dict = {
 
 "风月楼": { en: "brothel (literary name)", phonetic: "ˈbrɒθəl", cn: "青楼", level: "advanced" },
 
-"丞相": { en: "prime minister (ancient China)", phonetic: "praɪm ˈmɪnɪstə", cn: "丞相", level: "advanced" },
-"曹操": { en: "Cao Cao", phonetic: "tsaʊ tsaʊ", cn: "曹操（历史人物）", level: "advanced" },
-
-"五铢钱": { en: "ancient Chinese coin", phonetic: "ˈeɪnʃənt ˈtʃaɪniːz kɔɪn", cn: "汉代铜钱", level: "advanced" },
+"丞相": { en: "prime minister", phonetic: "praɪm ˈmɪnɪstə", cn: "丞相", level: "advanced" },
 
 "兵刃": { en: "weapon", phonetic: "ˈwepən", cn: "武器", level: "advanced" },
 
@@ -209,8 +255,6 @@ const dict = {
 
 "兵刃": { en: "weapon", phonetic: "ˈwɛpən", cn: "武器" },
 
-"六十大板": { en: "sixty lashes punishment", phonetic: "ˈsɪksti ˈlæʃɪz", cn: "古代刑罚" },
-
 "五十大板": { en: "fifty lashes punishment", phonetic: "ˈfɪfti ˈlæʃɪz", cn: "古代刑罚" },
 
 "凤目": { en: "phoenix-like eyes", phonetic: "ˈfiːnɪks aɪz", cn: "细长美目" },
@@ -227,7 +271,7 @@ const dict = {
 
 "张牙舞爪": { en: "fierce and aggressive", phonetic: "ˈfɪərs ənd əˈɡresɪv", cn: "凶狠张狂" },
 
-"垂涎": { en: "to covet / drool over", phonetic: "ˈkʌvɪt", cn: "垂涎" },
+"垂涎": { en: "with a greedy grin", phonetic: "ˈɡriːdi ɡrɪn", cn: "垂涎" },
 
 "草棚": { en: "straw shed", phonetic: "strɔː ʃed", cn: "草棚" },
 
@@ -239,17 +283,11 @@ const dict = {
 
 "帝都": { en: "imperial capital", phonetic: "ɪmˈpɪəriəl ˈkæpɪtl", cn: "帝都" },
 
-"风月楼": { en: "brothel (literary name)", phonetic: "ˈbrɒθəl", cn: "青楼" },
-
-"乞儿": { en: "beggar child", phonetic: "ˈbeɡə tʃaɪld", cn: "小乞丐" },
-
-"穿越": { en: "time travel / transmigration", phonetic: "ˈtraːnzmɪˈɡreɪʃn", cn: "穿越" },
-
 "风声水起": { en: "booming / thriving", phonetic: "ˈθraɪvɪŋ", cn: "形势兴旺" },
 
 "不期然": { en: "unexpectedly", phonetic: "ˌʌnɪkˈspɛktɪdli", cn: "不自觉地 / 意外地" },
 
-"戒备": { en: "vigilance / alert", phonetic: "ˈvɪdʒɪləns", cn: "警戒" },
+"戒备": { en: "vigilance", phonetic: "ˈvɪdʒɪləns", cn: "警戒" },
 
 "仰视": { en: "to look up at", phonetic: "lʊk ʌp", cn: "抬头看" },
 
@@ -282,10 +320,6 @@ const dict = {
 
 "桃园三兄弟": { en: "Oath brothers of Peach Garden", phonetic: "əʊθ ˈbrʌðərz ɒv piːtʃ ˈɡɑːdn", cn: "刘关张三人" },
 
-"丞相": { en: "prime minister", phonetic: "praɪm ˈmɪnɪstə", cn: "宰相" },
-"许昌": { en: "Xuchang", phonetic: "ˈʃuːˈtʃɑːŋ", cn: "三国都城" },
-"三国": { en: "Three Kingdoms", phonetic: "ˌθriː ˈkɪŋdəmz", cn: "历史时期" },
-
 "狼吞虎咽": { en: "gobble down", phonetic: "ˈɡɒbəl daʊn", cn: "吃得很快" },
 "蹒跚": { en: "stagger", phonetic: "ˈstæɡə", cn: "走路不稳" },
 
@@ -302,22 +336,10 @@ const dict = {
 "乞丐": { en: "beggar", phonetic: "ˈbeɡə", cn: "乞丐" },
 
 "风月": { en: "romantic affairs", phonetic: "rɒˈmæntɪk əˈfeəz", cn: "男女情事" },
-"回风姑娘": { en: "courtesan name", phonetic: "ˈkɔːtɪzæn neɪm", cn: "青楼女子" },
-
-"张飞": { en: "Zhang Fei", phonetic: "ʒɑːŋ feɪ", cn: "三国人物" },
-"关羽": { en: "Guan Yu", phonetic: "ɡwɑːn juː", cn: "三国人物" },
-"刘备": { en: "Liu Bei", phonetic: "liːu beɪ", cn: "三国人物" },
-"曹操": { en: "Cao Cao", phonetic: "tsaʊ tsaʊ", cn: "三国人物" },
-
-"如雷贯耳": { en: "famous", phonetic: "ˈfeɪməs", cn: "名声很大" },
 "义气": { en: "loyalty", phonetic: "ˈlɔɪəlti", cn: "讲义气" },
 
 "毛骨悚然": { en: "creepy", phonetic: "ˈkriːpi", cn: "令人恐惧" },
-"乞丐": { en: "beggar", phonetic: "ˈbeɡər", cn: "乞丐" },
 "医馆": { en: "clinic", phonetic: "ˈklɪnɪk", cn: "医馆" },
-"风月楼": { en: "brothel (literary euphemism)", phonetic: "ˈbrɒθəl", cn: "青楼" },
-"五铢钱": { en: "Wuzhu coin (ancient Chinese currency)", phonetic: "ˈwuːˌʒuː kɔɪn", cn: "汉代铜钱" },
-"孔方兄": { en: "copper coin with square hole (humorous term for money)", phonetic: "ˈkɒpər kɔɪn", cn: "方孔钱" },
 "篆字": { en: "seal script characters", phonetic: "siːl skrɪpt", cn: "篆书" },
 "斜挎包": { en: "crossbody bag", phonetic: "ˈkrɒsˌbɒdi bæɡ", cn: "单肩斜挎包" },
 "瑞士军刀": { en: "Swiss Army knife", phonetic: "ˈswɪs ˈɑːmi naɪf", cn: "多功能折叠刀" },
@@ -370,12 +392,10 @@ const dict = {
 
 "小贩": { en: "street vendor", phonetic: "striːt ˈvɛndər", cn: "摆摊商贩" },
 "玉佩": { en: "jade pendant", phonetic: "dʒeɪd ˈpɛndənt", cn: "玉饰" },
-"荷包": { en: "money pouch", phonetic: "ˈmʌni paʊtʃ", cn: "钱袋" },
+"荷包": { en: "pouch", phonetic: "paʊtʃ", cn: "钱袋" },
 "钱币": { en: "coin", phonetic: "kɔɪn", cn: "钱币" },
 "褴褛": { en: "ragged", phonetic: "ˈræɡɪd", cn: "破烂的" },
 "翠绿": { en: "emerald green", phonetic: "ˈɛmərəld ɡriːn", cn: "翠绿色" },
-
-"偷儿": { en: "thief", phonetic: "θiːf", cn: "小偷" },
 "顺手牵羊": { en: "petty theft", phonetic: "ˈpɛti θɛft", cn: "顺手偷拿" },
 
 "起哄": { en: "heckle", phonetic: "ˈhɛkəl", cn: "起哄" },
@@ -390,8 +410,6 @@ const dict = {
 "行家": { en: "expert", phonetic: "ˈekspɜːrt", cn: "内行" },
 "玉佩": { en: "jade pendant", phonetic: "dʒeɪd ˈpendənt", cn: "佩戴饰品" },
 "荷包": { en: "pouch", phonetic: "paʊtʃ", cn: "装钱的小袋子" },
-"钱袋": { en: "money bag", phonetic: "ˈmʌni bæɡ", cn: "装钱的袋子" },
-"五铢钱": { en: "ancient Chinese coin", phonetic: "ˈeɪnʃənt kɔɪn", cn: "汉代铜钱" },
 "古币": { en: "ancient coin", phonetic: "ˈeɪnʃənt kɔɪn", cn: "古代货币" },
 "医馆": { en: "clinic", phonetic: "ˈklɪnɪk", cn: "看病的地方" },
 "山羊胡": { en: "goatee old man", phonetic: "ɡoʊˈtiː", cn: "山羊胡须的人" },
@@ -399,11 +417,10 @@ const dict = {
 "偷儿": { en: "pickpocket", phonetic: "ˈpɪkpɒkɪt", cn: "扒手" },
 "荷包": { en: "pouch", phonetic: "paʊtʃ", cn: "钱袋" },
 "摊贩": { en: "street vendor", phonetic: "striːt ˈvendər", cn: "路边小贩" },
-"大街": { en: "main street", phonetic: "meɪn striːt", cn: "街道" },
 "荒地": { en: "wasteland", phonetic: "ˈweɪstlænd", cn: "荒芜土地" },
 "棺材": { en: "coffin", phonetic: "ˈkɒfɪn", cn: "装尸体的盒子" },
 "安葬": { en: "bury", phonetic: "ˈberi", cn: "埋葬" },
-"拖油瓶": { en: "burden companion", phonetic: "ˈbɜːrdn kəmˈpæniən", cn: "累赘" },
+"拖油瓶": { en: "burden", phonetic: "ˈbɜːrdn", cn: "累赘" },
 "拖累": { en: "drag down", phonetic: "dræɡ daʊn", cn: "连累" },
 "玉佩玉质": { en: "jade quality", phonetic: "dʒeɪd ˈkwɒlɪti", cn: "玉的品质" },
 "荷包鼓鼓": { en: "bulging pouch", phonetic: "ˈbʌldʒɪŋ paʊtʃ", cn: "装满的钱袋" },
@@ -417,25 +434,17 @@ const dict = {
 "暴发户": { en: "nouveau riche", phonetic: "ˌnuːvoʊ ˈriːʃ", cn: "突然富起来的人" },
 "玉佩掉落": { en: "jade pendant falling", phonetic: "dʒeɪd ˈpendənt ˈfɔːlɪŋ", cn: "玉佩掉下" },
 "冤魂": { en: "wronged spirit", phonetic: "rɒŋd ˈspɪrɪt", cn: "冤死之魂" },
-"拖油瓶二号": { en: "second burden companion", phonetic: "ˈsekənd ˈbɜːrdn kəmˈpæniən", cn: "第二个累赘" },
 "无辜": { en: "innocent", phonetic: "ˈɪnəsənt", cn: "没有罪" },
 "惩罚": { en: "punishment", phonetic: "ˈpʌnɪʃmənt", cn: "处罚" },
 "报仇": { en: "revenge", phonetic: "rɪˈvendʒ", cn: "报复" },
-"穿越": { en: "time travel", phonetic: "taɪm ˈtrævl", cn: "穿越时空" },
-"福利院": { en: "orphanage", phonetic: "ˈɔːrfənɪdʒ", cn: "孤儿院" },
-"拖油瓶一号": { en: "first burden companion", phonetic: "ˈfɜːrst ˈbɜːrdn kəmˈpæniən", cn: "第一个累赘" },
 "善良": { en: "kind-hearted", phonetic: "kaɪnd ˈhɑːrtɪd", cn: "心地善良" },
 "杀意": { en: "killing intent", phonetic: "ˈkɪlɪŋ ɪnˈtent", cn: "杀气" },
 "信誓旦旦": { en: "earnest promise", phonetic: "ˈɜːrnɪst ˈprɒmɪs", cn: "郑重发誓" },
 "气喘如牛": { en: "panting heavily", phonetic: "ˈpæntɪŋ ˈhevɪli", cn: "喘得厉害" },
-"咬牙切齿": { en: "gnashing teeth", phonetic: "ˈnæʃɪŋ tiːθ", cn: "愤怒状态" },
+"咬牙切齿": { en: "grit one’s teeth ", phonetic: "ɡrɪt", cn: "愤怒状态" },
 "阿嚏": { en: "achoo", phonetic: "əˈtʃuː", cn: "打喷嚏声" },
-"拖油瓶": { en: "burden companion", phonetic: "ˈbɜːrdn kəmˈpæniən", cn: "累赘" },
-"小胡子": { en: "man with mustache", phonetic: "ˈmʌstæʃ mæn", cn: "留胡子的人" },
-"钱袋": { en: "money pouch", phonetic: "ˈmʌni paʊtʃ", cn: "装钱的袋子" },
-"孔方兄": { en: "ancient copper coin", phonetic: "ˈeɪnʃənt kɔɪn", cn: "古代铜钱别称" },
-"五铢钱": { en: "Wu Zhu coin", phonetic: "wuː ʒuː kɔɪn", cn: "汉代钱币" },
-"丞相大人": { en: "Lord Chancellor", phonetic: "lɔːrd ˈtʃænsələr", cn: "对丞相的尊称" },
+"小胡子": { en: "a man with a thin mustache", phonetic: "ˈmʌstæʃ", cn: "留胡子的人" },
+"钱袋": { en: "pouch", phonetic: "paʊtʃ", cn: "装钱的袋子" },
 "失忆": { en: "amnesia", phonetic: "æmˈniːʒə", cn: "失去记忆" },
 "雨停": { en: "rain stops", phonetic: "reɪn stɒps", cn: "雨停止" },
 "血迹": { en: "bloodstain", phonetic: "ˈblʌdsteɪn", cn: "血的痕迹" },
@@ -446,7 +455,7 @@ const dict = {
 "阴影": { en: "shadow", phonetic: "ˈʃædoʊ", cn: "阴暗处" },
 "追兵": { en: "pursuers", phonetic: "pərˈsuːərz", cn: "追赶的人" },
 "脚步声": { en: "footsteps", phonetic: "ˈfʊtsteps", cn: "走路声" },
-"通报": { en: "report announcement", phonetic: "rɪˈpɔːrt", cn: "通传消息" },
+"通报": { en: "to announce (our arrival)", phonetic: "əˈnaʊns", cn: "通传消息" },
 "府门": { en: "mansion gate", phonetic: "ˈmænʃən ɡeɪt", cn: "府邸大门" },
 "血腥味": { en: "bloody smell", phonetic: "ˈblʌdi smel", cn: "血的味道" },
 "发热": { en: "fever", phonetic: "ˈfiːvər", cn: "发烧" },
@@ -467,7 +476,163 @@ const dict = {
 "诡异": { en: "strange", phonetic: "streɪndʒ", cn: "怪异" },
 "怀疑": { en: "doubt", phonetic: "daʊt", cn: "不相信" },
 "求生": { en: "survival", phonetic: "sərˈvaɪvl", cn: "求活" },
-"逃跑": { en: "escape", phonetic: "ɪˈskeɪp", cn: "逃走" }
+"逃跑": { en: "escape", phonetic: "ɪˈskeɪp", cn: "逃走" },
+"明媚的": { en: "bright and beautiful", phonetic: "braɪt ænd ˈbjuːtɪfl", cn: "明亮而美好" },
+"热闹": { en: "bustling", phonetic: "ˈbʌslɪŋ", cn: "喧闹繁华" },
+"破旧的": { en: "shabby", phonetic: "ˈʃæbi", cn: "破旧的" },
+"挤进": { en: "squeeze into", phonetic: "skwiːz ˈɪntuː", cn: "挤入" },
+"庆典": { en: "celebration", phonetic: "ˌselɪˈbreɪʃn", cn: "庆祝活动" },
+"离奇的": { en: "bizarre", phonetic: "bɪˈzɑːr", cn: "离奇的" },
+"事故": { en: "accident", phonetic: "ˈæksɪdənt", cn: "事故" },
+"凑上前": { en: "edge closer", phonetic: "edʒ ˈkləʊsə", cn: "凑近" },
+"神不知鬼不觉": { en: "without anyone noticing", phonetic: "wɪˈðaʊt ˈeniwʌn ˈnəʊtɪsɪŋ", cn: "悄无声息" },
+"中气十足的": { en: "full-voiced", phonetic: "ˈfʊl vɔɪst", cn: "声音洪亮的" },
+"试图": { en: "attempt", phonetic: "əˈtempt", cn: "尝试" },
+"拼命": { en: "desperately", phonetic: "ˈdespərətli", cn: "拼命地" },
+"魔咒": { en: "spell", phonetic: "spel", cn: "魔法咒语" },
+"对面": { en: "opposite side", phonetic: "ˈɒpəzɪt saɪd", cn: "对面" },
+"话筒": { en: "microphone", phonetic: "ˈmaɪkrəfəʊn", cn: "麦克风" },
+"混乱": { en: "chaos", phonetic: "ˈkeɪɒs", cn: "混乱" },
+"针织帽": { en: "knit hat", phonetic: "nɪt hæt", cn: "毛线帽" },
+"踮起脚尖": { en: "stand on tiptoe", phonetic: "stænd ɒn ˈtɪptəʊ", cn: "踮脚" },
+"蛋卷": { en: "egg roll", phonetic: "eɡ rəʊl", cn: "蛋卷" },
+"刺耳": { en: "harsh", phonetic: "hɑːʃ", cn: "刺耳的" },
+"绕路走": { en: "take a detour", phonetic: "teɪk ə ˈdiːtʊə", cn: "绕路" },
+"握拳": { en: "clench one’s fist", phonetic: "klentʃ wʌnz fɪst", cn: "握紧拳头" },
+"疯狗": { en: "mad dog", phonetic: "mæd dɒɡ", cn: "疯狗" },
+"狠狠": { en: "fiercely", phonetic: "ˈfɪəsli", cn: "狠狠地" },
+"瓷器": { en: "porcelain", phonetic: "ˈpɔːsəlɪn", cn: "瓷器" },
+"瓦片": { en: "tile", phonetic: "taɪl", cn: "瓦片" },
+"很明显": { en: "obviously", phonetic: "ˈɒbviəsli", cn: "显然" },
+"若无其事地": { en: "as if nothing happened", phonetic: "æz ɪf ˈnʌθɪŋ ˈhæpənd", cn: "若无其事" },
+"社工": { en: "social worker", phonetic: "ˈsəʊʃl ˈwɜːkə", cn: "社会工作者" },
+"哄着": { en: "coax", phonetic: "kəʊks", cn: "哄劝" },
+"语塞": { en: "be at a loss for words", phonetic: "bi æt ə lɒs fə wɜːdz", cn: "说不出话" },
+"怜惜地": { en: "tenderly", phonetic: "ˈtendəli", cn: "怜爱地" },
+"烧坏了脑子": { en: "brain damaged", phonetic: "breɪn ˈdæmɪdʒd", cn: "脑子烧坏" },
+"刻意地": { en: "deliberately", phonetic: "dɪˈlɪbərətli", cn: "故意地" },
+"卑微地": { en: "humbly", phonetic: "ˈhʌmbli", cn: "卑微地" },
+"抓住": { en: "grasp", phonetic: "ɡrɑːsp", cn: "抓住" },
+"遭遇不幸": { en: "meet misfortune", phonetic: "miːt mɪsˈfɔːtʃuːn", cn: "遭遇不幸" },
+"煞星": { en: "jinx", phonetic: "dʒɪŋks", cn: "带来厄运的人" },
+"听众": { en: "audience", phonetic: "ˈɔːdiəns", cn: "听众" },
+"年复一年": { en: "year after year", phonetic: "jɪə ˈɑːftə jɪə", cn: "年复一年" },
+"侧头": { en: "tilt one’s head", phonetic: "tɪlt wʌnz hed", cn: "侧头" },
+"夸张的": { en: "exaggerated", phonetic: "ɪɡˈzædʒəreɪtɪd", cn: "夸张的" },
+"休闲服": { en: "casual wear", phonetic: "ˈkæʒuəl weə", cn: "休闲装" },
+"头晕": { en: "dizzy", phonetic: "ˈdɪzi", cn: "头晕" },
+"无奈地": { en: "helplessly", phonetic: "ˈhelpləsli", cn: "无奈地" },
+"翻了个白眼": { en: "roll one’s eyes", phonetic: "rəʊl wʌnz aɪz", cn: "翻白眼" },
+"宠溺": { en: "indulgent", phonetic: "ɪnˈdʌldʒənt", cn: "宠溺的（表情）" },
+"呲牙咧嘴": { en: "grimace", phonetic: "ˈɡrɪməs", cn: "龇牙咧嘴" },
+"两眼无神": { en: "dull-eyed", phonetic: "dʌl aɪd", cn: "眼神呆滞" },
+"印堂发黑": { en: "a dark look between the brows", phonetic: "ə dɑːk lʊk bɪˈtwiːn ðə braʊz", cn: "印堂发黑" },
+"倒霉相": { en: "unlucky look", phonetic: "ʌnˈlʌki lʊk", cn: "倒霉样" },
+"幸灾乐祸": { en: "gloat", phonetic: "ɡləʊt", cn: "幸灾乐祸" },
+"被子": { en: "quilt", phonetic: "kwɪlt", cn: "被子" },
+"酸楚": { en: "bitterness", phonetic: "ˈbɪtənəs", cn: "心酸" },
+"夹缝": { en: "crevice", phonetic: "ˈkrevɪs", cn: "缝隙" },
+"狠了狠心": { en: "harden one’s heart", phonetic: "ˈhɑːdn wʌnz hɑːt", cn: "狠下心" },
+"遗嘱": { en: "will", phonetic: "wɪl", cn: "遗嘱" },
+"下巴": { en: "chin", phonetic: "tʃɪn", cn: "下巴" },
+"吃什么醋啊": { en: "what are you jealous about", phonetic: "wɒt ɑː ju ˈdʒeləs əˈbaʊt", cn: "吃什么醋" },
+"讨巧地": { en: "ingratiatingly", phonetic: "ɪnˈɡreɪʃieɪtɪŋli", cn: "讨好地" },
+"扑到": { en: "pounce on", phonetic: "paʊns ɒn", cn: "扑向" },
+"臭豆腐": { en: "stinky tofu", phonetic: "ˈstɪŋki ˈtəʊfuː", cn: "臭豆腐" },
+"渐渐": { en: "gradually", phonetic: "ˈɡrædʒuəli", cn: "逐渐" },
+"疾速下降": { en: "plummet", phonetic: "ˈplʌmɪt", cn: "急剧下降" },
+"猪圈": { en: "pigsty", phonetic: "ˈpɪɡstaɪ", cn: "猪圈" },
+"呻吟": { en: "groan", phonetic: "ɡrəʊn", cn: "呻吟" },
+"奋力": { en: "with all one’s strength", phonetic: "wɪð ɔːl wʌnz streŋθ", cn: "奋力" },
+"马缰": { en: "reins", phonetic: "reɪnz", cn: "缰绳" },
+"没良心": { en: "heartless", phonetic: "ˈhɑːtləs", cn: "没良心的" },
+"老本": { en: "one’s savings", phonetic: "wʌnz ˈseɪvɪŋz", cn: "积蓄" },
+"不容抗拒的": { en: "irresistible", phonetic: "ˌɪrɪˈzɪstəbl", cn: "无法抗拒的" },
+"威严": { en: "dignity", phonetic: "ˈdɪɡnəti", cn: "威严" },
+"傻眼": { en: "be dumbfounded", phonetic: "bi ˌdʌmˈfaʊndɪd", cn: "目瞪口呆" },
+"病弱的": { en: "frail", phonetic: "freɪl", cn: "虚弱的" },
+"耸肩": { en: "shrug", phonetic: "ʃrʌɡ", cn: "耸肩" },
+"摧残": { en: "ravage", phonetic: "ˈrævɪdʒ", cn: "摧残" },
+"无情地": { en: "mercilessly", phonetic: "ˈmɜːsɪləsli", cn: "无情地" },
+"尊严": { en: "dignity", phonetic: "ˈdɪɡnəti", cn: "尊严" },
+"痛苦地": { en: "painfully", phonetic: "ˈpeɪnfəli", cn: "痛苦地" },
+"大逆不道的": { en: "rebellious", phonetic: "rɪˈbeljəs", cn: "大逆不道的" },
+"得意": { en: "proud", phonetic: "praʊd", cn: "得意" },
+"教训": { en: "lesson", phonetic: "ˈlesn", cn: "教训" },
+"结论": { en: "conclusion", phonetic: "kənˈkluːʒn", cn: "结论" },
+"欺侮": { en: "bully", phonetic: "ˈbʊli", cn: "欺负" },
+"堕落": { en: "degenerate", phonetic: "dɪˈdʒenəreɪt", cn: "堕落" },
+"隐藏": { en: "conceal", phonetic: "kənˈsiːl", cn: "隐藏" },
+"连年征战": { en: "fight year after year", phonetic: "faɪt jɪə ˈɑːftə jɪə", cn: "连年征战" },
+"分作三份": { en: "divide into three parts", phonetic: "dɪˈvaɪd ˈɪntuː θriː pɑːts", cn: "分成三份" },
+"我不入地狱谁入地狱": { en: "if not me, who will", phonetic: "ɪf nɒt miː huː wɪl", cn: "我来承担" },
+"寡情的": { en: "cold-hearted", phonetic: "ˈkəʊld hɑːtɪd", cn: "薄情的" },
+"大方地": { en: "generously", phonetic: "ˈdʒenərəsli", cn: "大方地" },
+"限量发行的": { en: "limited edition", phonetic: "ˈlɪmɪtɪd ɪˈdɪʃn", cn: "限量版" },
+"珍藏版": { en: "collector’s edition", phonetic: "kəˈlektəz ɪˈdɪʃn", cn: "珍藏版" },
+"准确来说": { en: "to be precise", phonetic: "tuː bi prɪˈsaɪs", cn: "准确地说" },
+"贫瘠": { en: "barren", phonetic: "ˈbærən", cn: "贫瘠的" },
+"沙漠": { en: "desert", phonetic: "ˈdezət", cn: "沙漠" },
+"绿洲": { en: "oasis", phonetic: "əʊˈeɪsɪs", cn: "绿洲" },
+"腼腆": { en: "shy", phonetic: "ʃaɪ", cn: "腼腆" },
+"捍卫": { en: "defend", phonetic: "dɪˈfend", cn: "捍卫" },
+"营养不良": { en: "malnourished", phonetic: "ˌmælnʌrɪʃt", cn: "营养不良的" },
+"水井": { en: "well", phonetic: "wel", cn: "水井" },
+"漱口": { en: "rinse one’s mouth", phonetic: "rɪns wʌnz maʊθ", cn: "漱口" },
+"倒影": { en: "reflection", phonetic: "rɪˈflekʃn", cn: "倒影" },
+"牛仔裤": { en: "jeans", phonetic: "dʒiːnz", cn: "牛仔裤" },
+"脊背": { en: "back", phonetic: "bæk", cn: "后背" },
+"觉察": { en: "notice", phonetic: "ˈnəʊtɪs", cn: "察觉" },
+"人情": { en: "human sentiment", phonetic: "ˈhjuːmən ˈsentɪmənt", cn: "人情" },
+"探究": { en: "explore", phonetic: "ɪkˈsplɔː", cn: "探究" },
+"怒吼": { en: "roar", phonetic: "rɔː", cn: "怒吼" },
+"看轻": { en: "look down on", phonetic: "lʊk daʊn ɒn", cn: "轻视" },
+"羞辱": { en: "humiliate", phonetic: "hjuːˈmɪlieɪt", cn: "羞辱" },
+"干脆": { en: "simply", phonetic: "ˈsɪmpli", cn: "干脆地" },
+"打交道": { en: "deal with", phonetic: "diːl wɪð", cn: "打交道" },
+"没甚骨气地": { en: "spinelessly", phonetic: "ˈspaɪnləsli", cn: "没骨气地" },
+"菜肴": { en: "dish", phonetic: "dɪʃ", cn: "菜肴" },
+"豪爽": { en: "straightforward", phonetic: "ˌstreɪtˈfɔːwəd", cn: "豪爽" },
+"含糊不清地": { en: "vaguely", phonetic: "ˈveɪɡli", cn: "含糊地" },
+"眼神": { en: "gaze", phonetic: "ɡeɪz", cn: "眼神" },
+"青楼": { en: "brothel", phonetic: "ˈbrɒθl", cn: "青楼" },
+"真是过分": { en: "that’s too much", phonetic: "ðæts tuː mʌtʃ", cn: "太过分了" },
+"狠心的": { en: "cruel", phonetic: "ˈkruːəl", cn: "狠心的" },
+"酒保": { en: "bartender", phonetic: "ˈbɑːtendə", cn: "酒保" },
+"镇定": { en: "calm", phonetic: "kɑːm", cn: "镇定" },
+"麻痹": { en: "numb", phonetic: "nʌm", cn: "麻木" },
+"瘟神": { en: "jinx", phonetic: "dʒɪŋks", cn: "带来厄运的人" },
+"想歪了": { en: "get the wrong idea", phonetic: "ɡet ðə rɒŋ aɪˈdɪə", cn: "想歪了" },
+"做呕吐状": { en: "pretend to vomit", phonetic: "prɪˈtend tuː ˈvɒmɪt", cn: "作呕状" },
+"体态丰满的": { en: "plump", phonetic: "plʌmp", cn: "丰满的" },
+"就诊": { en: "see a doctor", phonetic: "siː ə ˈdɒktə", cn: "看病" },
+"文盲": { en: "illiterate", phonetic: "ɪˈlɪtərət", cn: "文盲" },
+"恶俗的": { en: "vulgar", phonetic: "ˈvʌlɡə", cn: "粗俗的" },
+"情节": { en: "plot", phonetic: "plɒt", cn: "情节" },
+"上演": { en: "stage", phonetic: "steɪdʒ", cn: "上演" },
+"自动自发地": { en: "spontaneously", phonetic: "spɒnˈteɪniəsli", cn: "自发地" },
+"呜咽": { en: "sob", phonetic: "sɒb", cn: "抽泣" },
+"识相点": { en: "know your place", phonetic: "nəʊ jɔː pleɪs", cn: "识相点" },
+"有原则的": { en: "principled", phonetic: "ˈprɪnsəpld", cn: "有原则的" },
+"体面": { en: "decent", phonetic: "ˈdiːsnt", cn: "体面" },
+"噩梦": { en: "nightmare", phonetic: "ˈnaɪtmeə", cn: "噩梦" },
+"辱骂": { en: "insult", phonetic: "ɪnˈsʌlt", cn: "辱骂" },
+"甘心": { en: "willing", phonetic: "ˈwɪlɪŋ", cn: "甘心的" },
+"唾沫": { en: "spit", phonetic: "spɪt", cn: "唾沫" },
+"职业习惯": { en: "professional habit", phonetic: "prəˈfeʃənl ˈhæbɪt", cn: "职业习惯" },
+"心虚": { en: "guilty", phonetic: "ˈɡɪlti", cn: "心虚" },
+"替罪羔羊": { en: "scapegoat", phonetic: "ˈskeɪpɡəʊt", cn: "替罪羊" },
+"心里阴影": { en: "psychological shadow", phonetic: "ˌsaɪkəˈlɒdʒɪkl ˈʃædəʊ", cn: "心理阴影" },
+"怨念": { en: "resentment", phonetic: "rɪˈzentmənt", cn: "怨气" },
+"揪住": { en: "grab", phonetic: "ɡræb", cn: "揪住" },
+"恶霸": { en: "bully", phonetic: "ˈbʊli", cn: "恶霸" },
+"补偿": { en: "compensate", phonetic: "ˈkɒmpenseɪt", cn: "补偿" },
+"茧": { en: "cocoon", phonetic: "kəˈkuːn", cn: "茧" },
+"粗糙的": { en: "rough", phonetic: "rʌf", cn: "粗糙的" },
+"布料": { en: "fabric", phonetic: "ˈfæbrɪk", cn: "布料" },
+"烘干": { en: "dry", phonetic: "draɪ", cn: "烘干" },
+"招摇": { en: "show off", phonetic: "ʃəʊ ɒf", cn: "招摇" },
+"腥味": { en: "fishy smell", phonetic: "ˈfɪʃi smel", cn: "腥味" }
 };
 
 // ===== 示例文本 =====
@@ -25992,146 +26157,121 @@ const text = `笑倾三国》  作者：梦三生
 
 
 
-// ===== 渲染 =====
+let wordBook = [];
+let autoSpeak = false;
+
 function render(text) {
   let html = text;
-
-  // ① 把词按长度排序（关键！！）
-  const words = Object.keys(dict).sort((a, b) => b.length - a.length);
+  const words = Object.keys(dict).sort((a,b)=>b.length-a.length);
 
   for (let cn of words) {
     const en = dict[cn].en;
-
     const reg = new RegExp(cn, "g");
 
     html = html.replace(
       reg,
-      `${cn}<span class="en" data-en="${en}" onclick="showWord(this)"> ${en}</span>`
+      `${cn}<span class="en" data-en="${en}" onclick="showWord(this)">${en}</span>`
     );
   }
-  html = html.replace(/\n/g, "<br>");
+
   document.getElementById("content").innerHTML = html;
-  console.log("render running");
 }
 
-// ===== 弹窗 =====
 function showWord(el) {
   const en = el.getAttribute("data-en");
   const data = Object.values(dict).find(v => v.en === en);
 
-  const mainWord = en.split("/")[0].trim();
-
   const popup = document.getElementById("popup");
 
   popup.innerHTML = `
-    <div class="word">${en}</div>
+    <div class="word-box">
+  <div class="word-text">${en}</div>
 
+</div>
+<span 
+  style="cursor:pointer;font-size:18px;position:absolute;right:12px;top:10px;"
+  onclick="addToWordBook('${en}', '${data?.cn || ""}')"
+  title="加入今日单词本"
+>
+  ⭐
+</span>
     <div class="phonetic-box">
       <div>${data?.phonetic || ""}</div>
       <button class="speak-btn" onclick="speak('${en}')">🔊</button>
     </div>
 
-    <div class="cn">${data?.cn || ""}</div>
+    <div>${data?.cn || ""}</div>
 
-    <div style="margin-top:10px;">
-      <button class="speak-btn" onclick="openYoudao('${mainWord}')">📘 Youdao</button>
-    </div>
-
-    <div class="auto-box">
-      自动发音：
-      <span class="toggle ${autoSpeak ? "on" : "off"}" onclick="toggleAuto()">
-        ${autoSpeak ? "ON" : "OFF"}
-      </span>
-    </div>
+    <button class="youdao-btn" onclick="openYoudao('${en}')">
+  📘 Youdao
+</button>
   `;
 
   popup.style.display = "block";
-
-  if (autoSpeak) speak(en);
+  speak(en);
 }
+function addToWordBook(word, cn) {
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-// ===== youdao =====
+  const exists = wordBook.find(w => w.word === word);
+
+  if (!exists) {
+    wordBook.push({
+      word,
+      cn,
+      date: today
+    });
+  }
+
+  renderWordBook();
+}
+function renderWordBook() {
+  const panel = document.getElementById("wordBookPanel");
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const todayWords = wordBook.filter(w => w.date === today);
+
+  panel.innerHTML = todayWords.map(w => `
+    <div style="margin-bottom:8px;">
+      <b>${w.word}</b><br>
+      <span style="color:gray">${w.cn}</span>
+    </div>
+  `).join("");
+}
+function speak(word) {
+  new Audio(`https://dict.youdao.com/dictvoice?audio=${word}&type=1`).play();
+}
 
 function openYoudao(word) {
   document.getElementById("YoudaoFrame").src =
     `https://m.youdao.com/m/result?word=${word}&lang=en`;
   document.getElementById("YoudaoBox").style.display = "block";
 }
-function closeYoudao() {
-  document.getElementById("YoudaoBox").style.display = "none";
+
+function toggleWordBook() {
+  const panel = document.getElementById("wordBookPanel");
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
 }
 
-// ===== 发音 =====
-function speak(word) {
-  const audio = new Audio(
-    `https://dict.youdao.com/dictvoice?audio=${word}&type=1`
-  );
-  audio.play();
-}
-
-// ===== 开关 =====
-function toggleAuto() {
-  autoSpeak = !autoSpeak;
-  document.getElementById("popup").style.display = "none";
-}
-
-// ===== 点击外部关闭 =====
-document.addEventListener("click", function(e){
+document.addEventListener("click", function (e) {
+  const box = document.getElementById("YoudaoBox");
   const popup = document.getElementById("popup");
-  if (!popup.contains(e.target) && !e.target.classList.contains("en")) {
-    popup.style.display = "none";
-  }
+
+  const isYoudaoBtn = e.target.closest(".youdao-btn");
+  const isEn = e.target.classList.contains("en");
+
+  // ❗点击单词 / 按钮时，不处理关闭
+  if (isYoudaoBtn || isEn) return;
+
+  // 关闭 popup
+  if (popup) popup.style.display = "none";
+
+  // 关闭 Youdao
+  if (box) box.style.display = "none";
 });
 
 render(text);
-// 自动发音开关
-let autoSpeak = false;
-let isDragging = false;
-let offsetX = 0;
-let offsetY = 0;
-
-const box = document.getElementById("YoudaoBox");
-
-// ❗安全检查（避免 null 报错）
-if (box) {
-
-  box.addEventListener("mousedown", function (e) {
-    isDragging = true;
-
-    offsetX = e.clientX - box.offsetLeft;
-    offsetY = e.clientY - box.offsetTop;
-  });
-
-}
-
-// ❗拖动
-document.addEventListener("mousemove", function (e) {
-  if (!isDragging || !box) return;
-
-  box.style.left = (e.clientX - offsetX) + "px";
-  box.style.top = (e.clientY - offsetY) + "px";
-  box.style.right = "auto";
-});
-
-// ❗结束拖动
-document.addEventListener("mouseup", function () {
-  isDragging = false;
-});
-
-// ❗点击空白关闭
-document.addEventListener("click", function (e) {
-  const popup = document.getElementById("popup");
-  const box = document.getElementById("YoudaoBox");
-
-  const isWord = e.target.classList.contains("en");
-  const isInsidePopup = popup && popup.contains(e.target);
-  const isInsideBox = box && box.contains(e.target);
-
-  if (!isWord && !isInsidePopup && !isInsideBox) {
-    if (popup) popup.style.display = "none";
-    if (box) box.style.display = "none";
-  }
-});
 </script>
 
 </body>
